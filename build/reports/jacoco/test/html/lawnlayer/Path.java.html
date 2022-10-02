@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Path.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">lawnlayer</a> &gt; <a href="index.source.html" class="el_package">lawnlayer</a> &gt; <span class="el_source">Path.java</span></div><h1>Path.java</h1><pre class="source lang-java linenums">package lawnlayer;
+
+import java.util.ArrayList;
+import processing.core.PImage;
+import java.lang.*;
+
+/**
+ * Path class for the each path created by ball
+*/
+public class Path {
+    private ArrayList&lt;MyPoint&gt; path;
+    private ArrayList&lt;Enemy&gt; enemies;
+    private int currentIndex;
+    private boolean struck;
+    private int spreadCount;
+    private PImage redImage;
+    private PImage dirtImage;
+    private Map map;
+
+    /**
+     * Constructor of path
+     * @param enemies list of enemies for current map
+     * @param redImage image of red tile
+     * @param dirtImage image of dirt tile
+     * @param map map for current level
+    */
+<span class="fc" id="L27">    public Path(ArrayList&lt;Enemy&gt; enemies, PImage redImage, PImage dirtImage, Map map) {</span>
+<span class="fc" id="L28">        this.spreadCount = 0;</span>
+<span class="fc" id="L29">        this.path = new ArrayList&lt;MyPoint&gt;();</span>
+<span class="fc" id="L30">        this.struck = false;</span>
+<span class="fc" id="L31">        this.enemies = enemies;</span>
+<span class="fc" id="L32">        this.redImage = redImage;</span>
+<span class="fc" id="L33">        this.dirtImage = dirtImage;</span>
+<span class="fc" id="L34">        this.map = map;</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * Returns points of the path
+    */
+    public ArrayList&lt;MyPoint&gt; getPoints() {
+<span class="fc" id="L41">        return this.path;</span>
+    }
+
+    /**
+     * Returns number of points in path
+    */
+    public int size() {
+<span class="fc" id="L48">        return this.path.size();</span>
+    }
+
+    /**
+     * Adds a point to the path
+    */
+    public void add(MyPoint p) {
+<span class="fc" id="L55">        this.path.add(p);</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Checks if path contains a point
+    */
+    public int exists(int x, int y) {
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (int count = 0; count &lt; this.path.size(); count++) {</span>
+<span class="fc" id="L63">            MyPoint p = this.path.get(count);</span>
+<span class="fc bfc" id="L64" title="All 4 branches covered.">            if (x == p.getX() &amp;&amp; y == p.getY()) {</span>
+<span class="fc" id="L65">                return count;</span>
+            }
+        }
+<span class="fc" id="L68">        return -1;</span>
+    }
+
+    /**
+     * Returns x coordinate of current red tile
+    */
+    public int getCurrentX() {
+<span class="fc" id="L75">        return this.path.get(currentIndex).getX();</span>
+    }
+
+    /**
+     * Returns y coordinate of current red tile
+    */
+    public int getCurrentY() {
+<span class="fc" id="L82">        return this.path.get(currentIndex).getY();</span>
+    }
+
+    /**
+     * Finds a point within an enclosed shape for BFS
+    */
+    public MyPoint findPoint(int x_max, int x_min, int y_max, int y_min) {
+<span class="fc" id="L89">        MyPoint p = this.path.get(0);</span>
+<span class="fc" id="L90">        int x = p.getX();</span>
+<span class="fc" id="L91">        int y = p.getY();</span>
+
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (x_max == x_min) {</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">            for (int y_count = 0; y_count &lt; 32; y_count++) {</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">                if (exists(x, y_count) != -1) {</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">                    if (!(this.map.getTile(x - 1, y_count) instanceof Collidable)) {</span>
+<span class="fc" id="L97">                        return new MyPoint(x - 1, y_count);</span>
+                    }
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">                    else if (!(this.map.getTile(x + 1, y_count) instanceof Collidable)) {</span>
+<span class="fc" id="L100">                        return new MyPoint(x + 1, y_count);</span>
+                    }
+                }
+            }
+<span class="nc" id="L104">            return null;</span>
+        }
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (y_max == y_min) {</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">            for (int x_count = 0; x_count &lt; 64; x_count++) {</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">                if (exists(x_count, y) != -1) {</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">                    if (!(this.map.getTile(x_count, y - 1) instanceof Collidable)) {</span>
+<span class="fc" id="L110">                        return new MyPoint(x_count, y - 1);</span>
+                    }
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">                    else if (!(this.map.getTile(x_count, y + 1) instanceof Collidable)) {</span>
+<span class="fc" id="L113">                        return new MyPoint(x_count, y + 1);</span>
+                    }
+                }
+            }
+<span class="nc" id="L117">            return null;</span>
+        }
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (x &lt; x_max) {</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">            for (int x1 = x + 1; x1 &lt;= 63; x1++) {</span>
+<span class="fc bfc" id="L121" title="All 4 branches covered.">                if (exists(x1, y) != -1 || this.map.getTile(x1, y) instanceof Collidable) {</span>
+<span class="pc bpc" id="L122" title="1 of 4 branches missed.">                    if (exists(x1 - 1, y) == -1 &amp;&amp; !(this.map.getTile(x1 - 1, y) instanceof Collidable)) {</span>
+<span class="fc" id="L123">                        return new MyPoint(x1 - 1, y);</span>
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+        }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (x &gt; x_min){</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">            for (int x2 = x - 1; x2 &gt;= 0; x2--) {</span>
+<span class="fc bfc" id="L133" title="All 4 branches covered.">                if (exists(x2, y) != -1 || this.map.getTile(x2, y) instanceof Collidable) {</span>
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">                    if (exists(x2 + 1, y) == -1 &amp;&amp; !(this.map.getTile(x2 + 1, y) instanceof Collidable)) {</span>
+<span class="fc" id="L135">                        return new MyPoint(x2 + 1, y);</span>
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+        }
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">        if (y &lt; y_max) {</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            for (int y1 = y + 1; y1 &lt;= 31; y1++) {</span>
+<span class="nc bnc" id="L145" title="All 4 branches missed.">                if (exists(x, y1) != -1 || this.map.getTile(x, y1) instanceof Collidable) {</span>
+<span class="nc bnc" id="L146" title="All 4 branches missed.">                    if (exists(x, y1 - 1) == -1 &amp;&amp; !(this.map.getTile(x, y1 - 1) instanceof Collidable)) {</span>
+<span class="nc" id="L147">                        return new MyPoint(x, y1 - 1);</span>
+                    }
+                }
+            }
+        }
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        if (y &gt; y_min) {</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">            for (int y2 = y - 1; y2 &gt;= 0; y2--) {</span>
+<span class="pc bpc" id="L154" title="1 of 4 branches missed.">                if (exists(x, y2) != -1 || this.map.getTile(x, y2) instanceof Collidable) {</span>
+<span class="pc bpc" id="L155" title="2 of 4 branches missed.">                    if (exists(x, y2 + 1) == -1 &amp;&amp; !(this.map.getTile(x, y2 + 1) instanceof Collidable)) {</span>
+<span class="fc" id="L156">                        return new MyPoint(x, y2 + 1);</span>
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+        }
+<span class="nc" id="L164">        return null;</span>
+    }
+
+    /**
+     * Handles collision between path and enemy, as well as propagation of red path
+    */
+    public boolean handleCollision() {
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (!this.struck) {</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            for (int count = 0; count &lt; this.path.size(); count++) {</span>
+<span class="fc" id="L173">                int x1 = this.path.get(count).getX();</span>
+<span class="fc" id="L174">                int y1 = this.path.get(count).getY();</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">                for (Enemy enemy : enemies) {</span>
+<span class="fc" id="L176">                    int x2 = enemy.getX();</span>
+<span class="fc" id="L177">                    int y2 = enemy.getY();</span>
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">                    if ((Math.abs(x2 - x1) + Math.abs(y2 - y1) == 1) ||</span>
+<span class="pc bpc" id="L180" title="1 of 6 branches missed.">                        (enemy.getDir() == Direction.UP_LEFT &amp;&amp; x2 - x1 == 1 &amp;&amp; y2 - y1 == 1) || </span>
+<span class="pc bpc" id="L181" title="5 of 6 branches missed.">                        (enemy.getDir() == Direction.UP_RIGHT &amp;&amp; x2 - x1 == -1 &amp;&amp; y2 - y1 == 1) || </span>
+<span class="pc bpc" id="L182" title="5 of 6 branches missed.">                        (enemy.getDir() == Direction.DOWN_RIGHT &amp;&amp; x2 - x1 == -1 &amp;&amp; y2 - y1 == -1) || </span>
+<span class="pc bpc" id="L183" title="3 of 6 branches missed.">                        (enemy.getDir() == Direction.DOWN_LEFT &amp;&amp; x2 - x1 == 1 &amp;&amp; y2 - y1 == -1))</span>
+                        
+                    {
+<span class="fc" id="L186">                        this.currentIndex = count;</span>
+<span class="fc" id="L187">                        this.struck = true;</span>
+<span class="fc" id="L188">                        this.spreadCount = 0;</span>
+                    }
+<span class="fc" id="L190">                }</span>
+            }
+<span class="fc bfc" id="L192" title="All 2 branches covered.">            if (this.struck) {</span>
+<span class="fc" id="L193">                this.map.setTile(getCurrentX(), getCurrentY(), new Red(this.redImage));</span>
+            }
+        }
+        else {
+<span class="fc bfc" id="L197" title="All 2 branches covered.">            if (this.spreadCount == 2) {</span>
+<span class="fc" id="L198">                this.spreadCount = 0;</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">                if (this.currentIndex &gt;= this.path.size() - 1) {</span>
+<span class="fc" id="L200">                    this.struck = false;</span>
+<span class="fc" id="L201">                    return true;</span>
+                }
+<span class="fc" id="L203">                this.currentIndex += 1;</span>
+<span class="fc" id="L204">                this.map.setTile(getCurrentX(), getCurrentY(), new Red(this.redImage));</span>
+            }
+            else {
+<span class="fc" id="L207">                this.spreadCount += 1;</span>
+            } 
+        }
+<span class="fc" id="L210">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

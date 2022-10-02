@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Enemy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">lawnlayer</a> &gt; <a href="index.source.html" class="el_package">lawnlayer</a> &gt; <span class="el_source">Enemy.java</span></div><h1>Enemy.java</h1><pre class="source lang-java linenums">package lawnlayer;
+
+import processing.core.PImage;
+import processing.core.PApplet;
+import java.util.ArrayList;
+
+/**
+ * Enemy class for multiple enemies
+*/
+public class Enemy {
+<span class="fc" id="L11">    private final int SPEED = 2;</span>
+    private int x;
+    private int y;
+    private Direction enemyDir;
+    private PImage image;
+    private PImage dirtImage;
+    private Map map;
+    private int type;
+
+    /**
+     * Constructor of enemy
+     * @param image image of enemy
+     * @param dirtImage image of dirt tile
+     * @param x x coordinate of enemy
+     * @param y y coordinate of enemy
+     * @param dir direction of enemy
+     * @param map map for each level
+     * @param type type of enemy (0 for worm, 1 for beetle)
+    */
+<span class="fc" id="L30">    public Enemy(PImage image, PImage dirtImage, int x, int y, int dir, Map map, int type) {</span>
+<span class="fc" id="L31">        this.image = image;</span>
+<span class="fc" id="L32">        this.dirtImage = dirtImage;</span>
+<span class="fc" id="L33">        this.x = x;</span>
+<span class="fc" id="L34">        this.y = y;</span>
+<span class="fc" id="L35">        this.enemyDir = Direction.values()[dir];</span>
+<span class="fc" id="L36">        this.map = map;</span>
+<span class="fc" id="L37">        this.type = type;</span>
+<span class="fc" id="L38">    }</span>
+    /**
+     * Handles logic for enemy at 60 FPS - moves diagonally, checks for collision and change directions accordingly, eats grass if enemy is beetle
+    */
+    public void tick() {
+<span class="fc" id="L43">        float x_val = (float) this.x / 20;</span>
+<span class="fc" id="L44">        float y_val = (float) this.y / 20;</span>
+<span class="fc" id="L45">        int x_round = getX();</span>
+<span class="fc" id="L46">        int y_round = getY();</span>
+
+<span class="pc bpc" id="L48" title="1 of 5 branches missed.">        switch (this.enemyDir) {</span>
+            case UP_LEFT:
+<span class="pc bpc" id="L50" title="1 of 4 branches missed.">                if (x_val == x_round &amp;&amp; y_val == y_round) {</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">                    if (checkCollision(x_round - 1, y_round - 1)) {</span>
+<span class="fc bfc" id="L52" title="All 4 branches covered.">                        if (checkCollision(x_round - 1, y_round) &amp;&amp; checkCollision(x_round, y_round - 1)) {</span>
+<span class="fc" id="L53">                            eatGrass(x_round - 1, y_round - 1);</span>
+<span class="fc" id="L54">                            this.enemyDir = Direction.DOWN_RIGHT;</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">                        } else if (checkCollision(x_round - 1, y_round)) {</span>
+<span class="fc" id="L57">                            eatGrass(x_round - 1, y_round);</span>
+<span class="fc" id="L58">                            this.enemyDir = Direction.UP_RIGHT;</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">                        } else if (checkCollision(x_round, y_round - 1)) {</span>
+<span class="fc" id="L61">                            eatGrass(x_round, y_round - 1);</span>
+<span class="fc" id="L62">                            this.enemyDir = Direction.DOWN_LEFT;</span>
+
+                        } else {
+<span class="fc" id="L65">                            eatGrass(x_round - 1, y_round - 1);</span>
+<span class="fc" id="L66">                            this.enemyDir = Direction.DOWN_RIGHT;</span>
+                        }
+<span class="fc" id="L68">                        return;</span>
+                    }
+                }
+<span class="fc" id="L71">                this.x -= SPEED;</span>
+<span class="fc" id="L72">                this.y -= SPEED;</span>
+<span class="fc" id="L73">                break;</span>
+
+            case UP_RIGHT:
+<span class="pc bpc" id="L76" title="1 of 4 branches missed.">                if (x_val == x_round &amp;&amp; y_val == y_round) {</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">                    if (checkCollision(x_round + 1, y_round - 1)) {</span>
+<span class="fc bfc" id="L78" title="All 4 branches covered.">                        if (checkCollision(x_round + 1, y_round) &amp;&amp; checkCollision(x_round, y_round - 1)) {</span>
+<span class="fc" id="L79">                            eatGrass(x_round + 1, y_round - 1);</span>
+<span class="fc" id="L80">                            this.enemyDir = Direction.DOWN_LEFT;</span>
+
+<span class="fc bfc" id="L82" title="All 2 branches covered.">                        } else if (checkCollision(x_round + 1, y_round)) {</span>
+<span class="fc" id="L83">                            eatGrass(x_round + 1, y_round);</span>
+<span class="fc" id="L84">                            this.enemyDir = Direction.UP_LEFT;</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">                        } else if (checkCollision(x_round, y_round - 1)) {</span>
+<span class="fc" id="L87">                            eatGrass(x_round, y_round - 1);</span>
+<span class="fc" id="L88">                            this.enemyDir = Direction.DOWN_RIGHT;</span>
+
+                        } else {
+<span class="fc" id="L91">                            eatGrass(x_round + 1, y_round - 1);</span>
+<span class="fc" id="L92">                            this.enemyDir = Direction.DOWN_LEFT;</span>
+                        }
+<span class="fc" id="L94">                        return;</span>
+                    }
+                }
+<span class="fc" id="L97">                this.x += SPEED;</span>
+<span class="fc" id="L98">                this.y -= SPEED;</span>
+<span class="fc" id="L99">                break;</span>
+                
+            case DOWN_RIGHT:
+<span class="pc bpc" id="L102" title="1 of 4 branches missed.">                if (x_val == x_round &amp;&amp; y_val == y_round) {</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">                    if (checkCollision(x_round + 1, y_round + 1)) {</span>
+<span class="fc bfc" id="L104" title="All 4 branches covered.">                        if (checkCollision(x_round + 1, y_round) &amp;&amp; checkCollision(x_round, y_round + 1)) {</span>
+<span class="fc" id="L105">                            eatGrass(x_round + 1, y_round + 1);</span>
+<span class="fc" id="L106">                            this.enemyDir = Direction.UP_LEFT;</span>
+
+<span class="fc bfc" id="L108" title="All 2 branches covered.">                        } else if (checkCollision(x_round + 1, y_round)) {</span>
+<span class="fc" id="L109">                            eatGrass(x_round + 1, y_round);</span>
+<span class="fc" id="L110">                            this.enemyDir = Direction.DOWN_LEFT;</span>
+
+<span class="fc bfc" id="L112" title="All 2 branches covered.">                        } else if (checkCollision(x_round, y_round + 1)) {</span>
+<span class="fc" id="L113">                            eatGrass(x_round, y_round + 1);</span>
+<span class="fc" id="L114">                            this.enemyDir = Direction.UP_RIGHT;</span>
+                            
+                        } else {
+<span class="fc" id="L117">                            eatGrass(x_round + 1, y_round + 1);</span>
+<span class="fc" id="L118">                            this.enemyDir = Direction.UP_LEFT;</span>
+                        }
+<span class="fc" id="L120">                        return;</span>
+                    }
+                }
+<span class="fc" id="L123">                this.x += SPEED;</span>
+<span class="fc" id="L124">                this.y += SPEED;</span>
+<span class="fc" id="L125">                break;</span>
+    
+            case DOWN_LEFT:
+<span class="pc bpc" id="L128" title="1 of 4 branches missed.">                if (x_val == x_round &amp;&amp; y_val == y_round) {</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                    if (checkCollision(x_round - 1, y_round + 1)) {</span>
+<span class="fc bfc" id="L130" title="All 4 branches covered.">                        if (checkCollision(x_round - 1, y_round) &amp;&amp; checkCollision(x_round, y_round + 1)) {</span>
+<span class="fc" id="L131">                            eatGrass(x_round - 1, y_round + 1);</span>
+<span class="fc" id="L132">                            this.enemyDir = Direction.UP_RIGHT;</span>
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                        } else if (checkCollision(x_round - 1, y_round)) {</span>
+<span class="fc" id="L135">                            eatGrass(x_round - 1, y_round);</span>
+<span class="fc" id="L136">                            this.enemyDir = Direction.DOWN_RIGHT;</span>
+
+<span class="fc bfc" id="L138" title="All 2 branches covered.">                        } else if (checkCollision(x_round, y_round + 1)) {</span>
+<span class="fc" id="L139">                            eatGrass(x_round, y_round + 1);</span>
+<span class="fc" id="L140">                            this.enemyDir = Direction.UP_LEFT;</span>
+
+                        } else {
+<span class="fc" id="L143">                            eatGrass(x_round - 1, y_round + 1);</span>
+<span class="fc" id="L144">                            this.enemyDir = Direction.UP_RIGHT;</span>
+                        }
+<span class="fc" id="L146">                        return;</span>
+                    }
+                }
+<span class="fc" id="L149">                this.x -= SPEED;</span>
+<span class="fc" id="L150">                this.y += SPEED;</span>
+                break;
+        }
+<span class="fc" id="L153">    }</span>
+
+    /**
+     * Returns x coordinate (in tiles) of enemy
+    */
+    public int getX() {
+<span class="fc" id="L159">        return Math.round((float) this.x / 20);</span>
+    }
+
+    /**
+     * Returns y coordinate (in tiles) of enemy
+    */
+    public int getY() {
+<span class="fc" id="L166">        return Math.round((float) this.y / 20);</span>
+    }
+
+    /**
+     * Returns direction of enemy
+    */
+    public Direction getDir() {
+<span class="fc" id="L173">        return this.enemyDir;</span>
+    }
+
+    /**
+     * Checks for collision with concrete, grass, green or red from Path
+    */
+    public boolean checkCollision(int x, int y) {
+<span class="pc bpc" id="L180" title="1 of 4 branches missed.">        if (this.map.getTile(x, y) instanceof Collidable || this.map.getTile(x, y) instanceof Colour) {</span>
+<span class="fc" id="L181">            return true;</span>
+        }
+<span class="fc" id="L183">        return false;</span>
+    }
+
+    /**
+     * Changes grass to dirt if beetle hits grass
+    */
+    public void eatGrass(int x, int y) {
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (this.type == 1) {</span>
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">            if (this.map.getName(x, y).equals(&quot;GRASS&quot;)) {</span>
+<span class="nc" id="L192">                this.map.setTile(x, y, new Dirt(this.dirtImage));</span>
+            }
+        }
+<span class="fc" id="L195">    }</span>
+
+    /**
+     * Draws enemy on screen - with minor adjustments depending on size of enemy image
+    */
+    public void draw(PApplet app) {
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (this.type == 0) {</span>
+<span class="fc" id="L202">            app.image(this.image, this.x, this.y + 80);</span>
+        }
+        else {
+<span class="fc" id="L205">            app.image(this.image, this.x - 5, this.y + 77);</span>
+        }
+<span class="fc" id="L207">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

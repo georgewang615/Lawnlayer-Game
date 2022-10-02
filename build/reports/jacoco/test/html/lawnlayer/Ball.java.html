@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Ball.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">lawnlayer</a> &gt; <a href="index.source.html" class="el_package">lawnlayer</a> &gt; <span class="el_source">Ball.java</span></div><h1>Ball.java</h1><pre class="source lang-java linenums">package lawnlayer;
+
+import processing.core.PImage;
+import processing.core.PApplet;
+import java.lang.Math;
+import java.util.ArrayList;
+import java.util.Random;
+
+/**
+ * Ball class for the one ball object during the entire game
+*/
+public class Ball {
+
+    private int speed;
+    private int x;
+    private int y;
+    private PImage ballImage;
+    private PImage grassImage;
+    private PImage greenImage;
+    private PImage redImage;
+    private PImage dirtImage;
+    private Map map;
+    private ArrayList&lt;Enemy&gt; enemies;
+    private ArrayList&lt;MyPoint&gt; fullMap;
+    private Path path;
+    private boolean pressed;
+    private Direction ballDir;
+
+    /**
+     * Constructor of ball
+     * @param ballImage image of ball
+     * @param greenImage image of green tile
+     * @param redImage image of red tile
+     * @param dirtImage image of dirt tile
+     * @param map map for each level
+     * @param enemies enemies for each level
+    */
+<span class="fc" id="L38">    public Ball(PImage ballImage, PImage grassImage, PImage greenImage, PImage redImage, PImage dirtImage, Map map, ArrayList&lt;Enemy&gt; enemies) {</span>
+<span class="fc" id="L39">        this.redImage = redImage;</span>
+<span class="fc" id="L40">        this.ballImage = ballImage;</span>
+<span class="fc" id="L41">        this.grassImage = grassImage;</span>
+<span class="fc" id="L42">        this.greenImage = greenImage;</span>
+<span class="fc" id="L43">        this.dirtImage = dirtImage;</span>
+<span class="fc" id="L44">        this.fullMap = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        for (int y_count = 0; y_count &lt; 32; y_count++) {</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">            for (int x_count = 0; x_count &lt; 64; x_count++) {</span>
+<span class="fc" id="L48">                fullMap.add(new MyPoint(x_count, y_count));</span>
+            }
+        }
+<span class="fc" id="L51">        reset(map, enemies);</span>
+<span class="fc" id="L52">    }</span>
+
+    /**
+     * Returns adjacent Returns up to 8 valid (dirt and not seen before) neighbours next to a given point
+    */
+    public ArrayList&lt;MyPoint&gt; getNeighbours(MyPoint current, ArrayList&lt;MyPoint&gt; seen, ArrayList&lt;MyPoint&gt; fringe) {
+<span class="fc" id="L58">        ArrayList&lt;MyPoint&gt; neighbours = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L59">        ArrayList&lt;MyPoint&gt; validNeighbours = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L61">        int x = current.getX();</span>
+<span class="fc" id="L62">        int y = current.getY();</span>
+
+<span class="fc" id="L64">        neighbours.add(new MyPoint(x - 1, y - 1));</span>
+<span class="fc" id="L65">        neighbours.add(new MyPoint(x, y - 1));</span>
+<span class="fc" id="L66">        neighbours.add(new MyPoint(x + 1, y - 1));</span>
+<span class="fc" id="L67">        neighbours.add(new MyPoint(x - 1, y));</span>
+<span class="fc" id="L68">        neighbours.add(new MyPoint(x + 1, y));</span>
+<span class="fc" id="L69">        neighbours.add(new MyPoint(x - 1, y + 1));</span>
+<span class="fc" id="L70">        neighbours.add(new MyPoint(x, y + 1));</span>
+<span class="fc" id="L71">        neighbours.add(new MyPoint(x + 1, y + 1));</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        for (MyPoint p : neighbours) {</span>
+<span class="pc bpc" id="L74" title="4 of 12 branches missed.">            if (p.getX() &gt;= 0 &amp;&amp; p.getX() &lt;= 63 &amp;&amp; p.getY() &gt;= 0 &amp;&amp; p.getY() &lt;= 31 &amp;&amp; !p.existsIn(seen) &amp;&amp; !p.existsIn(fringe)) {</span>
+<span class="fc" id="L75">                validNeighbours.add(p);</span>
+            } 
+<span class="fc" id="L77">        }</span>
+<span class="fc" id="L78">        return validNeighbours;</span>
+    }
+
+    /**
+     * Fills in grass shape upon completing a path. Uses breadth-first search by selecting a random point and repeatedly finding neighbours
+    */
+    public void fill() {
+<span class="fc" id="L85">        int x_min = this.path.getPoints().get(0).getX();</span>
+<span class="fc" id="L86">        int x_max = x_min;</span>
+<span class="fc" id="L87">        int y_min = this.path.getPoints().get(0).getY();</span>
+<span class="fc" id="L88">        int y_max = y_min;</span>
+
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        for (MyPoint p : this.path.getPoints()) {</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">            if (p.getX() &lt; x_min) {</span>
+<span class="nc" id="L92">                x_min = p.getX();</span>
+            }
+<span class="fc bfc" id="L94" title="All 2 branches covered.">            if (p.getX() &gt; x_max) {</span>
+<span class="fc" id="L95">                x_max = p.getX();</span>
+            }
+<span class="fc bfc" id="L97" title="All 2 branches covered.">            if (p.getY() &lt; y_min) {</span>
+<span class="fc" id="L98">                y_min = p.getY();</span>
+            }
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">            if (p.getY() &gt; y_max) {</span>
+<span class="nc" id="L101">                y_max = p.getY();</span>
+            }
+<span class="fc" id="L103">            this.map.setTile(p.getX(), p.getY(), new Grass(this.grassImage));</span>
+<span class="fc" id="L104">            this.map.increaseProgress();</span>
+<span class="fc" id="L105">        }</span>
+
+<span class="fc" id="L107">        Path pathCopy = this.path;</span>
+<span class="fc" id="L108">        this.path = new Path(this.enemies, this.redImage, this.dirtImage, this.map); </span>
+<span class="fc" id="L109">        MyPoint validPoint = pathCopy.findPoint(x_max, x_min, y_max, y_min);</span>
+
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        if (validPoint == null) {</span>
+<span class="nc" id="L112">            return;</span>
+        }
+
+<span class="fc" id="L115">        int pX = validPoint.getX();</span>
+<span class="fc" id="L116">        int pY = validPoint.getY();</span>
+
+<span class="fc" id="L118">        ArrayList&lt;MyPoint&gt; fringe = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L119">        ArrayList&lt;MyPoint&gt; seen = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L120">        ArrayList&lt;MyPoint&gt; valid = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L122">        fringe.add(new MyPoint(pX, pY));</span>
+
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        while (fringe.size() &gt; 0) {</span>
+<span class="fc" id="L125">            MyPoint current = fringe.remove(0);</span>
+<span class="fc" id="L126">            int x = current.getX();</span>
+<span class="fc" id="L127">            int y = current.getY();</span>
+<span class="fc" id="L128">            seen.add(current);</span>
+
+<span class="pc bpc" id="L130" title="1 of 4 branches missed.">            if (this.map.getTile(x, y) instanceof Collidable || this.map.getName(x, y).equals(&quot;GREEN&quot;)) {</span>
+<span class="nc" id="L131">                continue;</span>
+            } else {
+<span class="fc" id="L133">                fringe.addAll(getNeighbours(current, seen, fringe));</span>
+<span class="fc" id="L134">                valid.add(current);</span>
+            }
+<span class="fc" id="L136">        }</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (!MyPoint.includes(valid, enemies)) {</span>
+<span class="nc" id="L138">            this.map.fillTiles(valid, this.grassImage);</span>
+        }
+
+        else {
+<span class="fc" id="L142">            ArrayList&lt;MyPoint&gt; otherValid = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">            for (MyPoint p : fullMap) {</span>
+<span class="fc bfc" id="L144" title="All 4 branches covered.">                if (!p.existsIn(valid) &amp;&amp; !(this.map.getTile(p.getX(), p.getY()) instanceof Collidable)) {</span>
+<span class="fc" id="L145">                    otherValid.add(p);            </span>
+                }
+<span class="fc" id="L147">            }</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">            if (!MyPoint.includes(otherValid, enemies)) {</span>
+<span class="fc" id="L149">                this.map.fillTiles(otherValid, this.grassImage);</span>
+            }    
+        } 
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Changes the ball's location depending on the direction while creating its path. Also checks if self-intersection with path occurs
+    */
+    public void move() {
+<span class="fc" id="L158">        float x_val = (float) this.x / 20;</span>
+<span class="fc" id="L159">        float y_val = (float) this.y / 20;</span>
+<span class="fc" id="L160">        int x_round = Math.round(x_val);</span>
+<span class="fc" id="L161">        int y_round = Math.round(y_val);</span>
+<span class="fc" id="L162">        float x_diff = x_round - x_val;</span>
+<span class="fc" id="L163">        float y_diff = y_round - y_val;</span>
+
+<span class="pc bpc" id="L165" title="1 of 5 branches missed.">        switch (this.ballDir) {</span>
+            case LEFT:
+<span class="fc bfc" id="L167" title="All 2 branches covered.">                if (this.x &gt; 0) {</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">                    if (this.x &lt; 1240) {</span>
+<span class="fc bfc" id="L169" title="All 4 branches covered.">                        if (!(this.map.getTile(x_round, y_round) instanceof Collidable) &amp;&amp; x_diff &gt; 0) {</span>
+<span class="fc" id="L170">                            drawGreen(x_round, y_round);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">                            if (this.map.getName(x_round - 1, y_round).equals(&quot;GREEN&quot;)) {</span>
+<span class="fc" id="L172">                                this.loseLife();</span>
+<span class="fc" id="L173">                                break;</span>
+                            }
+                        }
+                    }
+<span class="fc" id="L177">                    this.x -= speed;</span>
+                }
+                break;
+
+            case UP:
+<span class="fc bfc" id="L182" title="All 2 branches covered.">                if (this.y &gt; 0) {</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">                    if (this.y &lt; 600){</span>
+<span class="fc bfc" id="L184" title="All 4 branches covered.">                        if (!(this.map.getTile(x_round, y_round) instanceof Collidable) &amp;&amp; y_diff &gt; 0) {</span>
+<span class="fc" id="L185">                            drawGreen(x_round, y_round);</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">                            if (this.map.getName(x_round, y_round - 1).equals(&quot;GREEN&quot;)) {</span>
+<span class="fc" id="L187">                                this.loseLife();</span>
+<span class="fc" id="L188">                                break;</span>
+                            }
+                        }
+                        
+                    }
+<span class="fc" id="L193">                    this.y -= speed;</span>
+                }
+                break;
+            
+            case RIGHT:
+<span class="fc bfc" id="L198" title="All 2 branches covered.">                if (this.x &lt; 1260) {</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">                    if (this.x &gt; 20) {</span>
+<span class="fc bfc" id="L200" title="All 4 branches covered.">                        if (!(this.map.getTile(x_round, y_round) instanceof Collidable) &amp;&amp; x_diff &lt; 0) {</span>
+<span class="fc" id="L201">                            drawGreen(x_round, y_round);</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">                            if (this.map.getName(x_round + 1, y_round).equals(&quot;GREEN&quot;)) {</span>
+<span class="fc" id="L203">                                this.loseLife();</span>
+<span class="fc" id="L204">                                break;</span>
+                            }
+                        }
+                        
+                    }
+<span class="fc" id="L209">                    this.x += speed;</span>
+                }
+                break;
+
+            case DOWN:
+<span class="fc bfc" id="L214" title="All 2 branches covered.">                if (this.y &lt; 620) {</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">                    if (this.y &gt; 20){</span>
+<span class="fc bfc" id="L216" title="All 4 branches covered.">                        if (!(this.map.getTile(x_round, y_round) instanceof Collidable) &amp;&amp; y_diff &lt; 0) {</span>
+<span class="fc" id="L217">                            drawGreen(x_round, y_round);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">                            if (this.map.getName(x_round, y_round + 1).equals(&quot;GREEN&quot;)) {</span>
+<span class="fc" id="L219">                                this.loseLife();</span>
+<span class="fc" id="L220">                                break;</span>
+                            }
+                        }
+                    }
+<span class="fc" id="L224">                    this.y += speed;</span>
+                }
+                break;
+        }
+<span class="fc" id="L228">    }</span>
+    
+
+
+    /**
+     * Handles ball logic at 60 FPS - moves the ball, fills the grass areas, checks for enemy-path collision
+    */
+    public void tick() {
+<span class="fc" id="L236">        float x_val = (float) this.x / 20;</span>
+<span class="fc" id="L237">        float y_val = (float) this.y / 20;</span>
+<span class="fc" id="L238">        int x_round = Math.round(x_val);</span>
+<span class="fc" id="L239">        int y_round = Math.round(y_val);</span>
+        
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">        if (this.path.handleCollision()) {</span>
+<span class="nc" id="L242">            this.loseLife();</span>
+        }
+
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if (this.map.getTile(x_round, y_round) instanceof Collidable) {</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">            if (this.path.size() &gt; 0) {</span>
+<span class="fc" id="L247">                fill();</span>
+            }
+
+<span class="fc bfc" id="L250" title="All 2 branches covered.">            if (this.pressed) {</span>
+<span class="fc" id="L251">                move();</span>
+            }
+
+            else {
+<span class="pc bpc" id="L255" title="3 of 16 branches missed.">                if (this.ballDir == Direction.LEFT &amp;&amp; x_round - x_val &lt; 0 ||</span>
+                    this.ballDir == Direction.UP &amp;&amp; y_round - y_val &lt; 0 ||
+                    this.ballDir == Direction.RIGHT &amp;&amp; x_round - x_val &gt; 0 ||
+                    this.ballDir == Direction.DOWN &amp;&amp; y_round - y_val &gt; 0) 
+                {
+<span class="fc" id="L260">                    move();</span>
+                }
+            }
+        }
+        else {
+<span class="fc" id="L265">            move();</span>
+        }
+<span class="fc" id="L267">    }</span>
+
+    /**
+     * Returns x coordinate of ball
+    */
+    public int getX() {
+<span class="fc" id="L273">        return this.x;</span>
+    }
+
+    /**
+     * Returns y coordinate of ball
+    */
+    public int getY() {
+<span class="fc" id="L280">        return this.y;</span>
+    }
+
+    /**
+     * Sets x coordinate of ball
+    */
+    public void setX(int x) {
+<span class="fc" id="L287">        this.x = x;</span>
+<span class="fc" id="L288">    }</span>
+
+    /**
+     * Sets y coordinate of ball
+    */
+    public void setY(int y) {
+<span class="fc" id="L294">        this.y = y;</span>
+<span class="fc" id="L295">    }</span>
+
+    /**
+     * Sets pressed state of ball
+    */
+    public void setPressed(boolean state) {
+<span class="fc" id="L301">        this.pressed = state;</span>
+<span class="fc" id="L302">    }</span>
+
+    /**
+     * Gets direction of ball
+    */
+    public Direction getDir() {
+<span class="fc" id="L308">        return this.ballDir;</span>
+    }
+
+    /**
+     * Sets direction of ball
+    */
+    public void setDir(Direction dir) {
+<span class="fc" id="L315">        this.ballDir = dir;</span>
+<span class="fc" id="L316">    }</span>
+
+    /**
+     * Handles life lost event and resets ball path
+    */
+    public void loseLife() {
+<span class="fc" id="L322">        this.map.loseLife();</span>
+<span class="fc" id="L323">        this.x = 0;</span>
+<span class="fc" id="L324">        this.y = 0;</span>
+<span class="fc" id="L325">        this.pressed = false;</span>
+
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        for (MyPoint p : this.path.getPoints()) {</span>
+<span class="fc" id="L328">            map.setTile(p.getX(), p.getY(), new Dirt(this.dirtImage));</span>
+<span class="fc" id="L329">        }</span>
+<span class="fc" id="L330">        this.path = new Path(this.enemies, this.redImage, this.dirtImage, this.map);</span>
+<span class="fc" id="L331">    }</span>
+
+    /**
+     * Updates path of ball during movement
+    */
+    public void drawGreen(int x, int y) {
+<span class="fc" id="L337">        MyPoint newPoint = new MyPoint(x, y);</span>
+<span class="fc bfc" id="L338" title="All 2 branches covered.">        if (!newPoint.existsIn(this.path.getPoints())) {</span>
+<span class="fc" id="L339">            this.path.add(newPoint);</span>
+<span class="fc" id="L340">            this.map.setTile(x, y, new Green(this.greenImage));</span>
+        }
+        
+<span class="fc" id="L343">    }</span>
+
+    /**
+     * Resets states at the beginning of each map
+    */
+    public void reset(Map map, ArrayList&lt;Enemy&gt; enemies) {
+<span class="fc" id="L349">        this.speed = 2;</span>
+<span class="fc" id="L350">        this.x = 0;</span>
+<span class="fc" id="L351">        this.y = 0;</span>
+<span class="fc" id="L352">        this.pressed = false;</span>
+<span class="fc" id="L353">        this.map = map;</span>
+<span class="fc" id="L354">        this.enemies = enemies;</span>
+<span class="fc" id="L355">        this.path = new Path(this.enemies, this.redImage, this.dirtImage, this.map);</span>
+<span class="fc" id="L356">    }</span>
+
+    /**
+     * Sets speed of ball
+    */
+    public void setSpeed(int speed) {
+<span class="fc" id="L362">        this.speed = speed;</span>
+<span class="fc" id="L363">    }</span>
+
+    /**
+     * Draws ball on screen
+    */
+    public void draw(PApplet app) {
+<span class="fc" id="L369">        app.image(this.ballImage, this.x, this.y + 80);</span>
+<span class="fc" id="L370">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="lawnlayer.AppTest" tests="6" skipped="1" failures="0" errors="0" timestamp="2022-06-08T07:46:52" hostname="Georges-MacPro" time="8.297">
+  <properties/>
+  <testcase name="appConstructorTest()" classname="lawnlayer.AppTest" time="0.851"/>
+  <testcase name="powerUpTest()" classname="lawnlayer.AppTest" time="2.227"/>
+  <testcase name="progressTest()" classname="lawnlayer.AppTest" time="1.22"/>
+  <testcase name="livesTest()" classname="lawnlayer.AppTest" time="1.262"/>
+  <testcase name="winTest()" classname="lawnlayer.AppTest" time="1.255"/>
+  <testcase name="setupTest()" classname="lawnlayer.AppTest" time="1.47">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Warning: the fonts "Times" and "Lucida Bright" are not available for the Java logical font "Serif", which may have unexpected appearance or behavior. Re-enable the "Times" font to remove this warning.
+Warning: the fonts "Times" and "Lucida Bright" are not available for the Java logical font "Serif", which may have unexpected appearance or behavior. Re-enable the "Times" font to remove this warning.
+Warning: the fonts "Times" and "Lucida Bright" are not available for the Java logical font "Serif", which may have unexpected appearance or behavior. Re-enable the "Times" font to remove this warning.
+Warning: the fonts "Times" and "Lucida Bright" are not available for the Java logical font "Serif", which may have unexpected appearance or behavior. Re-enable the "Times" font to remove this warning.
+Warning: the fonts "Times" and "Lucida Bright" are not available for the Java logical font "Serif", which may have unexpected appearance or behavior. Re-enable the "Times" font to remove this warning.
+]]></system-err>
+</testsuite>

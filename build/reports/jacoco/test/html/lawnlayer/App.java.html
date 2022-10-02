@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">lawnlayer</a> &gt; <a href="index.source.html" class="el_package">lawnlayer</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package lawnlayer;
+
+import org.checkerframework.checker.units.qual.A;
+import processing.core.PApplet;
+import processing.core.PImage;
+import processing.data.JSONObject;
+import processing.data.JSONArray;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.Random;
+import java.io.*;
+import java.lang.Math;
+
+import processing.core.PFont;
+
+/**
+ * App that draws at 60 FPS
+*/
+public class App extends PApplet {
+    
+    public static final int WIDTH = 1280;
+    public static final int HEIGHT = 720;
+    public static final int SPRITESIZE = 20;
+    public static final int TOPBAR = 80;
+    public static final int FPS = 60;
+
+    public String configPath;
+    
+    private PImage concreteImage;
+    private PImage dirtImage;
+    private PImage wormImage;
+    private PImage beetleImage;
+    private PImage iceImage;
+    private PImage rocketImage;
+    
+    private Map map;
+    private Random rand;
+    private ArrayList&lt;Enemy&gt; enemies;
+    private Ball ball;
+    
+    private PFont font;
+    private int level;
+    private int maxLevel;
+    private int maxLives;
+
+    private int timer;
+    private String powerUp;
+    private String activePowerUp;
+    private boolean frozen;
+    private MyPoint powerUpPoint;
+    private JSONObject json;
+
+
+<span class="fc" id="L54">    public App() {</span>
+<span class="fc" id="L55">        this.configPath = &quot;config.json&quot;;</span>
+<span class="fc" id="L56">    }</span>
+
+    /**
+     * Initialise the setting of the window size.
+    */
+    public void settings() {
+<span class="fc" id="L62">        size(WIDTH, HEIGHT); </span>
+        
+<span class="fc" id="L64">    }</span>
+
+
+    /**
+     * Load all resources such as images. Initialise the elements such as the player, enemies and map elements.
+    */
+    public void setup() {
+<span class="fc" id="L71">        frameRate(FPS);</span>
+<span class="fc" id="L72">        this.rand = new Random();</span>
+<span class="fc" id="L73">        this.font = createFont(&quot;Arial&quot;, 32, true);</span>
+<span class="fc" id="L74">        this.json = loadJSONObject(this.configPath);</span>
+<span class="fc" id="L75">        this.level = 0;</span>
+<span class="fc" id="L76">        this.maxLevel = this.json.getJSONArray(&quot;levels&quot;).size();</span>
+
+<span class="fc" id="L78">        String mapFile = this.json.getJSONArray(&quot;levels&quot;).getJSONObject(this.level).getString(&quot;outlay&quot;);</span>
+<span class="fc" id="L79">        int goal = (int) (this.json.getJSONArray(&quot;levels&quot;).getJSONObject(this.level).getFloat(&quot;goal&quot;) * 100);</span>
+
+<span class="fc" id="L81">        this.maxLives = this.json.getInt(&quot;lives&quot;);</span>
+        
+        // Load images during setup
+<span class="fc" id="L84">        this.concreteImage = loadImage(this.getClass().getResource(&quot;concrete_tile.png&quot;).getPath());</span>
+<span class="fc" id="L85">        this.dirtImage = loadImage(this.getClass().getResource(&quot;dirt.png&quot;).getPath());</span>
+<span class="fc" id="L86">        this.wormImage = loadImage(this.getClass().getResource(&quot;worm.png&quot;).getPath());</span>
+<span class="fc" id="L87">        this.beetleImage = loadImage(this.getClass().getResource(&quot;beetle.png&quot;).getPath());</span>
+<span class="fc" id="L88">        this.iceImage = loadImage(this.getClass().getResource(&quot;ice.png&quot;).getPath());</span>
+<span class="fc" id="L89">        this.rocketImage = loadImage(this.getClass().getResource(&quot;rocket.png&quot;).getPath());</span>
+
+<span class="fc" id="L91">        PImage ballImage = loadImage(this.getClass().getResource(&quot;ball.png&quot;).getPath());</span>
+<span class="fc" id="L92">        PImage grassImage = loadImage(this.getClass().getResource(&quot;grass.png&quot;).getPath());</span>
+<span class="fc" id="L93">        PImage greenImage = loadImage(this.getClass().getResource(&quot;green.png&quot;).getPath());</span>
+<span class="fc" id="L94">        PImage redImage = loadImage(this.getClass().getResource(&quot;red.png&quot;).getPath());</span>
+    
+<span class="fc" id="L96">        this.map = new Map(mapFile, this.maxLives, goal, this.concreteImage, this.dirtImage);</span>
+        
+<span class="fc" id="L98">        spawnEnemies();</span>
+        
+<span class="fc" id="L100">        ball = new Ball(ballImage, grassImage, greenImage, redImage, dirtImage, this.map, this.enemies);</span>
+<span class="fc" id="L101">    }</span>
+	
+    /**
+     * Draw all elements in the game by current frame. 
+    */
+    public void draw() {
+<span class="fc" id="L107">        background(94, 60, 33);</span>
+<span class="fc" id="L108">        textFont(this.font);</span>
+<span class="fc" id="L109">        text(&quot;Lives: &quot; + this.map.getLives(), 100, 40);</span>
+<span class="fc" id="L110">        text(String.format(&quot;%d/%d%%&quot;, this.map.getProgress(), this.map.getMaxProgress()), 400, 40);</span>
+<span class="fc" id="L111">        text(this.activePowerUp + &quot;: &quot; + (int) Math.ceil((float)(this.timer / 60)), 800, 40);</span>
+<span class="fc" id="L112">        timer -= 1;</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (timer == 0) {</span>
+<span class="nc" id="L114">            spawnPowerUp();</span>
+<span class="nc" id="L115">            timer = 600;</span>
+        }
+
+<span class="fc" id="L118">        textFont(this.font, 24);</span>
+
+<span class="fc" id="L120">        text(&quot;Level &quot; + (this.level + 1), 1180, 60);</span>
+
+<span class="fc" id="L122">        this.map.display(this);</span>
+
+<span class="fc" id="L124">        this.ball.tick();</span>
+<span class="fc" id="L125">        this.ball.draw(this);</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        for (Enemy i : enemies) {</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">            if (!this.frozen) {</span>
+<span class="fc" id="L129">                i.tick();</span>
+            }
+<span class="fc" id="L131">            i.draw(this);</span>
+<span class="fc" id="L132">        }</span>
+
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        if (!this.powerUp.equals(&quot;None&quot;)) {</span>
+
+<span class="fc" id="L136">            int powerUpX = this.powerUpPoint.getX();</span>
+<span class="fc" id="L137">            int powerUpY = this.powerUpPoint.getY();</span>
+<span class="fc" id="L138">            int x = Math.round((float) (this.ball.getX() / 20));</span>
+<span class="fc" id="L139">            int y = Math.round((float) (this.ball.getY() / 20));</span>
+
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">            if (this.powerUp.equals(&quot;Freeze Enemies&quot;)) {</span>
+<span class="fc" id="L142">                this.image(this.iceImage, powerUpX * 20, powerUpY * 20 + 80);</span>
+            }
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            else if (this.powerUp.equals(&quot;Double Speed&quot;)) {</span>
+<span class="nc" id="L145">                this.image(this.rocketImage, powerUpX * 20, powerUpY * 20 + 80);</span>
+            }
+
+            
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">            if (!this.map.getName(powerUpX, powerUpY).equals(&quot;DIRT&quot;)) {</span>
+<span class="fc" id="L150">                this.activePowerUp = &quot;No PowerUp&quot;;</span>
+<span class="fc" id="L151">                this.powerUp = &quot;None&quot;;</span>
+<span class="fc" id="L152">                this.timer = 600;</span>
+            }
+
+<span class="nc bnc" id="L155" title="All 4 branches missed.">            else if (powerUpX == x &amp;&amp; powerUpY == y) {</span>
+<span class="nc" id="L156">                this.activePowerUp = this.powerUp;</span>
+<span class="nc" id="L157">                this.powerUp = &quot;None&quot;;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">                if (this.activePowerUp.equals(&quot;Freeze Enemies&quot;)) {</span>
+<span class="nc" id="L159">                    this.frozen = true;</span>
+<span class="nc" id="L160">                    this.timer = 600;</span>
+                }
+<span class="nc bnc" id="L162" title="All 2 branches missed.">                else if (this.activePowerUp.equals(&quot;Double Speed&quot;)) {</span>
+<span class="nc" id="L163">                    this.ball.setSpeed(4);</span>
+<span class="nc" id="L164">                    this.timer = 600;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        if (this.map.getLives() == 0) {</span>
+<span class="fc" id="L170">            textFont(this.font, 150);</span>
+<span class="fc" id="L171">            background(139, 0, 0);</span>
+<span class="fc" id="L172">            textAlign(CENTER);</span>
+<span class="fc" id="L173">            text(&quot;YOU LOSE!&quot;, 640, 400);</span>
+<span class="fc" id="L174">            noLoop();</span>
+        }
+
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        if (this.map.getProgress() &gt;= this.map.getMaxProgress()) {</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">            if (this.level == this.maxLevel - 1) {</span>
+<span class="fc" id="L179">                textFont(this.font, 150);</span>
+<span class="fc" id="L180">                background(0, 100, 0);</span>
+<span class="fc" id="L181">                textAlign(CENTER);</span>
+<span class="fc" id="L182">                text(&quot;YOU WIN!&quot;, 640, 400);</span>
+<span class="fc" id="L183">                noLoop();</span>
+
+            } else {
+<span class="fc" id="L186">                increaseLevel();</span>
+<span class="fc" id="L187">                String mapFile = json.getJSONArray(&quot;levels&quot;).getJSONObject(this.level).getString(&quot;outlay&quot;);</span>
+<span class="fc" id="L188">                int goal = (int) (this.json.getJSONArray(&quot;levels&quot;).getJSONObject(this.level).getFloat(&quot;goal&quot;) * 100);</span>
+<span class="fc" id="L189">                this.map = new Map(mapFile, this.maxLives, goal, this.concreteImage, this.dirtImage);</span>
+<span class="fc" id="L190">                this.activePowerUp = &quot;No PowerUp&quot;;</span>
+<span class="fc" id="L191">                spawnPowerUp();</span>
+<span class="fc" id="L192">                spawnEnemies();</span>
+<span class="fc" id="L193">                this.ball.reset(this.map, this.enemies);</span>
+            }
+        }
+
+<span class="fc" id="L197">    }</span>
+
+    /**
+     * Spawns a random powerup and resets the effects of the active one
+    */
+    public void spawnPowerUp() {
+<span class="fc" id="L203">        int x_rand = 0;</span>
+<span class="fc" id="L204">        int y_rand = 0;</span>
+<span class="fc" id="L205">        int random = this.rand.nextInt(2);</span>
+<span class="fc" id="L206">        this.activePowerUp = &quot;No PowerUp&quot;;</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        while (!map.getName(x_rand, y_rand).equals(&quot;DIRT&quot;)) {</span>
+<span class="fc" id="L208">            x_rand = rand.nextInt(62) + 1;</span>
+<span class="fc" id="L209">            y_rand = rand.nextInt(30) + 1;</span>
+        }
+
+<span class="fc" id="L212">        this.powerUpPoint = new MyPoint(x_rand, y_rand);</span>
+
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (random == 0) {</span>
+<span class="fc" id="L215">            this.powerUp = &quot;Freeze Enemies&quot;;</span>
+        }
+        else {
+<span class="fc" id="L218">            this.powerUp = &quot;Double Speed&quot;;</span>
+        }
+
+<span class="fc" id="L221">        this.frozen = false;</span>
+<span class="fc" id="L222">        this.ball.setSpeed(2);</span>
+<span class="fc" id="L223">    }</span>
+
+
+    /**
+     * Spawns enemies upon reading a new map file
+    */
+    public void spawnEnemies() {
+<span class="fc" id="L230">        this.timer = 600;</span>
+<span class="fc" id="L231">        this.powerUp = &quot;None&quot;;</span>
+<span class="fc" id="L232">        this.frozen = false;</span>
+<span class="fc" id="L233">        this.activePowerUp = &quot;No PowerUp&quot;;</span>
+
+<span class="fc" id="L235">        this.enemies = new ArrayList&lt;Enemy&gt;();</span>
+<span class="fc" id="L236">        JSONArray enemiesArray = this.json.getJSONArray(&quot;levels&quot;).getJSONObject(this.level).getJSONArray(&quot;enemies&quot;);</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        for (int count = 0; count &lt; enemiesArray.size(); count++) {</span>
+<span class="fc" id="L238">            String spawn = enemiesArray.getJSONObject(count).getString(&quot;spawn&quot;);</span>
+<span class="fc" id="L239">            int type = enemiesArray.getJSONObject(count).getInt(&quot;type&quot;);</span>
+
+<span class="fc" id="L241">            int x = 0;</span>
+<span class="fc" id="L242">            int y = 0;</span>
+
+<span class="fc bfc" id="L244" title="All 2 branches covered.">            if (spawn.equals(&quot;random&quot;)) {</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">                while (map.getName(x, y).equals(&quot;CONCRETE&quot;)) {</span>
+<span class="fc" id="L246">                    y = rand.nextInt(30) + 1;</span>
+<span class="fc" id="L247">                    x = rand.nextInt(62) + 1;</span>
+                }
+            }
+            else {
+<span class="fc" id="L251">                x = Integer.parseInt(spawn.split(&quot;,&quot;)[0]);</span>
+<span class="fc" id="L252">                y = Integer.parseInt(spawn.split(&quot;,&quot;)[1]);</span>
+            }
+
+<span class="fc bfc" id="L255" title="All 2 branches covered.">            if (type == 0) {</span>
+<span class="fc" id="L256">                this.enemies.add(new Enemy(this.wormImage, this.dirtImage, x * 20, y * 20, rand.nextInt(4) + 4, this.map, type));</span>
+            }
+            else {
+<span class="fc" id="L259">                this.enemies.add(new Enemy(this.beetleImage, this.dirtImage, x * 20, y * 20, rand.nextInt(4) + 4, this.map, type));</span>
+            }
+        }
+<span class="fc" id="L262">    }</span>
+
+    /**
+     * Allowing arrow keys to trigger movement in direction
+    */
+    public void keyPressed() {
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        if (key == CODED) {</span>
+<span class="pc bpc" id="L269" title="2 of 4 branches missed.">            if (keyCode &gt;= 37 &amp;&amp; keyCode &lt;= 40) {</span>
+<span class="nc" id="L270">                this.ball.setPressed(true);</span>
+
+<span class="nc" id="L272">                int x_round = Math.round((float) (this.ball.getX() / 20));</span>
+<span class="nc" id="L273">                int y_round = Math.round((float) (this.ball.getY() / 20));</span>
+
+<span class="nc" id="L275">                Direction[] directions = Direction.values();</span>
+<span class="nc" id="L276">                int index = keyCode - 37;</span>
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">                if (directions[index] != this.ball.getDir()) {</span>
+
+<span class="nc" id="L280">                    this.ball.setX(x_round * 20);</span>
+<span class="nc" id="L281">                    this.ball.setY(y_round * 20);</span>
+<span class="nc" id="L282">                    this.ball.setDir(directions[index]);</span>
+                }
+            }
+        }
+<span class="fc" id="L286">    }</span>
+
+    /**
+     * Sets pressed state to false when arrow key is released
+    */
+    public void keyReleased() {
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        if (key == CODED) {</span>
+<span class="pc bpc" id="L293" title="2 of 4 branches missed.">            if (keyCode &gt;= 37 &amp;&amp; keyCode &lt;= 40) {</span>
+<span class="nc" id="L294">                this.ball.setPressed(false);</span>
+            }
+        }
+<span class="fc" id="L297">    }</span>
+
+    /**
+     * Increases the level by 1
+    */
+    public void increaseLevel() {
+<span class="fc" id="L303">        this.level += 1;</span>
+<span class="fc" id="L304">    }</span>
+
+    /**
+     * Returns the map for testing
+    */
+    public Map getMap() {
+<span class="fc" id="L310">        return this.map;</span>
+    }
+
+    /**
+     * Returns the ball for testing
+    */
+    public Ball getBall() {
+<span class="fc" id="L317">        return this.ball;</span>
+    }
+
+    /**
+     * Returns the powerup point for testing
+    */
+    public MyPoint getPowerUpPoint() {
+<span class="fc" id="L324">        return this.powerUpPoint;</span>
+    }
+
+
+    public static void main(String[] args) {
+<span class="nc" id="L329">        PApplet.main(&quot;lawnlayer.App&quot;);</span>
+<span class="nc" id="L330">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
